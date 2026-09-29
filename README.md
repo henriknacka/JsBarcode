@@ -9,6 +9,7 @@ The plugin uses Html5Canvas to generate draw the barcodes
 
 #### This is the list of supported barcodes:
 *  CODE128 (B or C)
+*  CODE128AUTO (switches between B and C to keep numbers short)
 *  EAN (13 and 8)
 *  UPC-A
 *  CODE39

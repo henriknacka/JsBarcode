@@ -183,7 +183,61 @@ function CODE128(string, code){
 		code128C: function(string){
 			string = string.replace(/ /g, "");
 			return calculateCode128(string, encodeC, 105, checksumC);
+		},
+		//Switches between B and C automatically to keep numbers short
+		code128AUTO: function(string){
+			var codes = autoCodes(string);
+			var result = "";
+			var sum = codes[0];
+			for(var i=0;i<codes.length;i++){
+				result += encodingById(codes[i]);
+				if(i > 0){
+					sum += codes[i]*i;
+				}
+			}
+			return result + encodingById(sum % 103) + endBin;
 		}
+	}
+
+	//Convert a string to a list of code128 ids (start code first), using
+	//code C for runs of four or more digits and code B for everything else
+	function autoCodes(string){
+		var codes = [];
+		var mode = null;
+		var i = 0;
+		while(i < string.length){
+			var run = 0;
+			while(i + run < string.length && /[0-9]/.test(string[i + run])){
+				run++;
+			}
+			if(run >= 4 || (i == 0 && run == string.length && run >= 2)){
+				//An odd run starts with one digit in code B so the rest forms pairs
+				if(run % 2 == 1){
+					if(mode === null){
+						codes.push(104);
+						mode = "B";
+					}
+					codes.push(weightByCharacter(string[i]));
+					i++;
+					run--;
+				}
+				codes.push(mode === null ? 105 : 99);
+				mode = "C";
+				for(var j=0;j<run;j+=2){
+					codes.push(parseInt(string.substr(i + j, 2), 10));
+				}
+				i += run;
+			}
+			else{
+				if(mode != "B"){
+					codes.push(mode === null ? 104 : 100);
+					mode = "B";
+				}
+				codes.push(weightByCharacter(string[i]));
+				i++;
+			}
+		}
+		return codes;
 	}
 
 	//Encode the characters (128 B)
@@ -245,4 +299,7 @@ function CODE128B(string) {
 }
 function CODE128C(string) {
 	return new CODE128(string, "C");
+};
+function CODE128AUTO(string) {
+	return new CODE128(string, "AUTO");
 };
