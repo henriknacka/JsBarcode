@@ -1,7 +1,8 @@
 function CODE128(string, code){
 	code = code || "B";
 
-	this.string128 = string+"";
+	string = string+"";
+	this.string128 = string;
 
 	this.valid = valid;
 
@@ -129,18 +130,25 @@ function CODE128(string, code){
 	[String.fromCharCode(136),"11010010000",104],
 	[String.fromCharCode(137),"11010011100",105]];
 
+	//Lookup tables built from the data above
+	var byId = {}, byChar = {};
+	for(var t=0;t<code128b.length;t++){
+		byId[code128b[t][2]] = code128b[t][1];
+		byChar[code128b[t][0]] = code128b[t];
+	}
+
 	//The end bits
 	var endBin = "1100011101011";
 
 	//This regexp is used for validation
 	var regexp = /^[!-~ ]+$/;
 
+	//CODE128C only encodes pairs of digits
+	var regexpC = /^([0-9][0-9])+$/;
+
 	//Use the regexp variable for validation
 	function valid(){
-		if(string.search(regexp)==-1){
-			return false;
-		}
-		return true;
+		return string.search(code == "C" ? regexpC : regexp) != -1;
 	}
 
 	//The encoder function that return a complete binary string. Data need to be validated before sent to this function
@@ -169,7 +177,6 @@ function CODE128(string, code){
 			return calculateCode128(string, encodeB, 104, checksumB);
 		},
 		code128C: function(string){
-			string = string.replace(/ /g, "");
 			return calculateCode128(string, encodeC, 105, checksumC);
 		}
 	}
@@ -214,32 +221,17 @@ function CODE128(string, code){
 
 	//Get the encoded data by the id of the character
 	function encodingById(id){
-		for(var i=0;i<code128b.length;i++){
-			if(code128b[i][2]==id){
-				return code128b[i][1];
-			}
-		}
-		return "";
+		return byId[id] || "";
 	}
 
 	//Get the id (weight) of a character
 	function weightByCharacter(character){
-		for(var i=0;i<code128b.length;i++){
-			if(code128b[i][0]==character){
-				return code128b[i][2];
-			}
-		}
-		return 0;
+		return byChar.hasOwnProperty(character) ? byChar[character][2] : 0;
 	}
 
 	//Get the encoded data of a character
 	function encodingByChar(character){
-		for(var i=0;i<code128b.length;i++){
-			if(code128b[i][0]==character){
-				return code128b[i][1];
-			}
-		}
-		return "";
+		return byChar.hasOwnProperty(character) ? byChar[character][1] : "";
 	}
 }
 

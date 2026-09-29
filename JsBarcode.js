@@ -7,6 +7,11 @@
 			image = document.querySelector(image);
 		}
 
+		//Abort with a clear error if no element was found
+		if(!image || ($ && image instanceof $ && image.length === 0)){
+			throw new Error('JsBarcode: no element found to draw the barcode on.');
+		}
+
 		var merge = function(m1, m2) {
 			var newMerge = {};
 			for (var k in m1) {
@@ -154,7 +159,10 @@
 
 	if ($) {
 		$.fn.JsBarcode = function(content, options,validFunction){
-			JsBarcode(this, content, options,validFunction);
+			//Draw on every matched element, not just the first
+			this.each(function(){
+				JsBarcode($(this), content, options, validFunction);
+			});
 			return this;
 		};
 	}

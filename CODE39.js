@@ -1,5 +1,5 @@
 function CODE39(string){
-	this.string = string.toUpperCase();
+	this.string = (string+"").toUpperCase();
 
 	var code39 = [
  [0,"0","101000111011101"]
