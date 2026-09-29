@@ -1,8 +1,8 @@
 (function($){
 
-	JsBarcode = function(image, content, options, validFunction) {
+	var JsBarcode = window.JsBarcode = function(image, content, options, validFunction) {
 
-		//Check if the image parameter should be
+		//Resolve the image parameter if it is a selector string
 		if(typeof image === "string"){
 			image = document.querySelector(image);
 		}
@@ -48,6 +48,11 @@
 			return image;
 		}
 
+		//Only allow the format to select an encoder constructor, not any global
+		if(typeof window[options.format] !== "function"){
+			validFunctionIfExist(false);
+			throw new Error('Unknown barcode format: ' + options.format);
+		}
 		var encoder = new window[options.format](content);
 
 		//Abort if the barcode format does not support the content
@@ -65,7 +70,6 @@
 					y = options.height + options.textPadding;
 
 					ctx.font = options.fontOptions + " " + options.fontSize + "px "+options.font;
-					ctx.textBaseline = "bottom";
 					ctx.textBaseline = 'top';
 
 					if(options.textAlign == "left"){
@@ -114,7 +118,7 @@
 		}
 
 		//Grab the dataUri from the canvas
-		uri = canvas.toDataURL('image/png');
+		var uri = canvas.toDataURL('image/png');
 
 		// check if given image is a jQuery object
 		if ($ && image instanceof $) {
