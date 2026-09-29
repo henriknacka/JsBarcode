@@ -148,7 +148,11 @@ function CODE128(string, code){
 
 	//Use the regexp variable for validation
 	function valid(){
-		return string.search(code == "C" ? regexpC : regexp) != -1;
+		//CODE128C ignores spaces, so allow them between the digit pairs
+		if(code == "C"){
+			return string.replace(/ /g, "").search(regexpC) != -1;
+		}
+		return string.search(regexp) != -1;
 	}
 
 	//The encoder function that return a complete binary string. Data need to be validated before sent to this function
@@ -177,6 +181,7 @@ function CODE128(string, code){
 			return calculateCode128(string, encodeB, 104, checksumB);
 		},
 		code128C: function(string){
+			string = string.replace(/ /g, "");
 			return calculateCode128(string, encodeC, 105, checksumC);
 		}
 	}
