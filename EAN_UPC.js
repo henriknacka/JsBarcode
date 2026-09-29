@@ -36,7 +36,7 @@ function EAN(EANnumber){
 		var structure = encoder.getEANstructure(number);
 
 		//Get the number to be encoded on the left side of the EAN code
-		var leftSide = number.substr(1,7);
+		var leftSide = number.substr(1,6);
 
 		//Get the number to be encoded on the right side of the EAN code
 		var rightSide = number.substr(7,6);

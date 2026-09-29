@@ -1,7 +1,8 @@
 function CODE128(string, code){
 	code = code || "B";
 
-	this.string128 = string+"";
+	string = string+"";
+	this.string128 = string;
 
 	this.valid = valid;
 
@@ -129,18 +130,29 @@ function CODE128(string, code){
 	[String.fromCharCode(136),"11010010000",104],
 	[String.fromCharCode(137),"11010011100",105]];
 
+	//Lookup tables built from the data above
+	var byId = {}, byChar = {};
+	for(var t=0;t<code128b.length;t++){
+		byId[code128b[t][2]] = code128b[t][1];
+		byChar[code128b[t][0]] = code128b[t];
+	}
+
 	//The end bits
 	var endBin = "1100011101011";
 
 	//This regexp is used for validation
 	var regexp = /^[!-~ ]+$/;
 
+	//CODE128C only encodes pairs of digits
+	var regexpC = /^([0-9][0-9])+$/;
+
 	//Use the regexp variable for validation
 	function valid(){
-		if(string.search(regexp)==-1){
-			return false;
+		//CODE128C ignores spaces, so allow them between the digit pairs
+		if(code == "C"){
+			return string.replace(/ /g, "").search(regexpC) != -1;
 		}
-		return true;
+		return string.search(regexp) != -1;
 	}
 
 	//The encoder function that return a complete binary string. Data need to be validated before sent to this function
@@ -171,7 +183,61 @@ function CODE128(string, code){
 		code128C: function(string){
 			string = string.replace(/ /g, "");
 			return calculateCode128(string, encodeC, 105, checksumC);
+		},
+		//Switches between B and C automatically to keep numbers short
+		code128AUTO: function(string){
+			var codes = autoCodes(string);
+			var result = "";
+			var sum = codes[0];
+			for(var i=0;i<codes.length;i++){
+				result += encodingById(codes[i]);
+				if(i > 0){
+					sum += codes[i]*i;
+				}
+			}
+			return result + encodingById(sum % 103) + endBin;
 		}
+	}
+
+	//Convert a string to a list of code128 ids (start code first), using
+	//code C for runs of four or more digits and code B for everything else
+	function autoCodes(string){
+		var codes = [];
+		var mode = null;
+		var i = 0;
+		while(i < string.length){
+			var run = 0;
+			while(i + run < string.length && /[0-9]/.test(string[i + run])){
+				run++;
+			}
+			if(run >= 4 || (i == 0 && run == string.length && run >= 2)){
+				//An odd run starts with one digit in code B so the rest forms pairs
+				if(run % 2 == 1){
+					if(mode === null){
+						codes.push(104);
+						mode = "B";
+					}
+					codes.push(weightByCharacter(string[i]));
+					i++;
+					run--;
+				}
+				codes.push(mode === null ? 105 : 99);
+				mode = "C";
+				for(var j=0;j<run;j+=2){
+					codes.push(parseInt(string.substr(i + j, 2), 10));
+				}
+				i += run;
+			}
+			else{
+				if(mode != "B"){
+					codes.push(mode === null ? 104 : 100);
+					mode = "B";
+				}
+				codes.push(weightByCharacter(string[i]));
+				i++;
+			}
+		}
+		return codes;
 	}
 
 	//Encode the characters (128 B)
@@ -214,32 +280,17 @@ function CODE128(string, code){
 
 	//Get the encoded data by the id of the character
 	function encodingById(id){
-		for(var i=0;i<code128b.length;i++){
-			if(code128b[i][2]==id){
-				return code128b[i][1];
-			}
-		}
-		return "";
+		return byId[id] || "";
 	}
 
 	//Get the id (weight) of a character
 	function weightByCharacter(character){
-		for(var i=0;i<code128b.length;i++){
-			if(code128b[i][0]==character){
-				return code128b[i][2];
-			}
-		}
-		return 0;
+		return byChar.hasOwnProperty(character) ? byChar[character][2] : 0;
 	}
 
 	//Get the encoded data of a character
 	function encodingByChar(character){
-		for(var i=0;i<code128b.length;i++){
-			if(code128b[i][0]==character){
-				return code128b[i][1];
-			}
-		}
-		return "";
+		return byChar.hasOwnProperty(character) ? byChar[character][1] : "";
 	}
 }
 
@@ -248,4 +299,7 @@ function CODE128B(string) {
 }
 function CODE128C(string) {
 	return new CODE128(string, "C");
+};
+function CODE128AUTO(string) {
+	return new CODE128(string, "AUTO");
 };

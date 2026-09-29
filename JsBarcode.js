@@ -1,10 +1,15 @@
 (function($){
 
-	JsBarcode = function(image, content, options, validFunction) {
+	var JsBarcode = window.JsBarcode = function(image, content, options, validFunction) {
 
-		//Check if the image parameter should be
+		//Resolve the image parameter if it is a selector string
 		if(typeof image === "string"){
 			image = document.querySelector(image);
+		}
+
+		//Abort with a clear error if no element was found
+		if(!image || ($ && image instanceof $ && image.length === 0)){
+			throw new Error('JsBarcode: no element found to draw the barcode on.');
 		}
 
 		var merge = function(m1, m2) {
@@ -48,6 +53,11 @@
 			return image;
 		}
 
+		//Only allow the format to select an encoder constructor, not any global
+		if(typeof window[options.format] !== "function"){
+			validFunctionIfExist(false);
+			throw new Error('Unknown barcode format: ' + options.format);
+		}
 		var encoder = new window[options.format](content);
 
 		//Abort if the barcode format does not support the content
@@ -65,7 +75,6 @@
 					y = options.height + options.textPadding;
 
 					ctx.font = options.fontOptions + " " + options.fontSize + "px "+options.font;
-					ctx.textBaseline = "bottom";
 					ctx.textBaseline = 'top';
 
 					if(options.textAlign == "left"){
@@ -114,7 +123,7 @@
 		}
 
 		//Grab the dataUri from the canvas
-		uri = canvas.toDataURL('image/png');
+		var uri = canvas.toDataURL('image/png');
 
 		// check if given image is a jQuery object
 		if ($ && image instanceof $) {
@@ -150,7 +159,10 @@
 
 	if ($) {
 		$.fn.JsBarcode = function(content, options,validFunction){
-			JsBarcode(this, content, options,validFunction);
+			//Draw on every matched element, not just the first
+			this.each(function(){
+				JsBarcode($(this), content, options, validFunction);
+			});
 			return this;
 		};
 	}

@@ -2,6 +2,11 @@ function ITF14(ITF14number){
 
 	this.ITF14number = ITF14number+"";
 
+	//Add the checksum to the text as well if it was not given
+	if(this.ITF14number.search(/^[0-9]{13}$/)!=-1){
+		this.ITF14number += checksum(this.ITF14number);
+	}
+
 	this.getText = function(){
 		return this.ITF14number;
 	};
@@ -83,7 +88,7 @@ function ITF14(ITF14number){
 
 		for(var i=0;i<13;i++){result+=parseInt(numberString[i])*(3-(i%2)*2)}
 
-		return 10 - (result % 10);
+		return (10 - (result % 10)) % 10;
 	}
 
 	function valid(number){

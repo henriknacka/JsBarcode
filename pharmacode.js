@@ -18,7 +18,7 @@ function pharmacode(number){
             nextState = state;
         }
         else{
-            generated = "001".repeat(nZeros - (state ? 1 : 0));
+            generated = repeat("001", nZeros - (state ? 1 : 0));
             generated += "00111";
         }
         return recursiveEncoding(code.substr(0,code.length - nZeros - 1),nextState) + generated;
@@ -39,16 +39,15 @@ function pharmacode(number){
     var zeros = function(code){
         var i = code.length - 1;
         var zeros = 0;
-        while(code[i]=="0" || i<0){
+        while(i>=0 && code[i]=="0"){
             zeros++;
             i--;
         }
         return zeros;
     };
 
-    //http://stackoverflow.com/a/202627
-    String.prototype.repeat = function( num )
-    {
-        return new Array( num + 1 ).join( this );
+    //Use a repeat helper instead of modifying String.prototype
+    function repeat(str, num){
+        return new Array( num + 1 ).join( str );
     }
 };
