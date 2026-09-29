@@ -97,7 +97,25 @@
 		var ctx	= canvas.getContext("2d");
 
 		//Set the width and height of the barcode
-		canvas.width = binary.length*options.width+2*options.quite;
+		var barcodeWidth = binary.length*options.width+2*options.quite;
+		canvas.width = barcodeWidth;
+
+		//Widen the canvas if the value text is wider than the barcode, so it is not cut off
+		var barcodeOffset = 0;
+		if(options.displayValue){
+			ctx.font = options.fontOptions + " " + options.fontSize + "px "+options.font;
+			var textWidth = ctx.measureText(encoder.getText()).width + 2*options.quite;
+			if(textWidth > barcodeWidth){
+				canvas.width = Math.ceil(textWidth);
+				//Keep the bars aligned with the text
+				if(options.textAlign == "right"){
+					barcodeOffset = canvas.width - barcodeWidth;
+				}
+				else if(options.textAlign != "left"){
+					barcodeOffset = Math.floor((canvas.width - barcodeWidth) / 2);
+				}
+			}
+		}
         //Set extra height if the value is displayed under the barcode. Multiplication with 1.3 t0 ensure that some
         //characters are not cut in half
 		canvas.height = options.height + (options.displayValue ? options.fontSize * 1.3 : 0) + options.textPadding;
@@ -112,7 +130,7 @@
 		//Creates the barcode out of the encoded binary
 		ctx.fillStyle = options.lineColor;
 		for(var i=0;i<binary.length;i++){
-			var x = i*options.width+options.quite;
+			var x = i*options.width+options.quite+barcodeOffset;
 			if(binary[i] == "1"){
 				ctx.fillRect(x,0,options.width,options.height);
 			}
